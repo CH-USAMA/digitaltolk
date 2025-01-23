@@ -32,11 +32,11 @@ database/migrations: Contains migration files to create tables for locales and t
 routes/web.php: Routes for storing and managing translations and locales.
 
 
-API Endpoints
-1. Store a New Translation
-POST /translations
+### API Endpoints
+### 1. Store a New Translation
+### POST /translations
 
-Request Body:
+### Request Body:
 
 {
     "locale": "en",
@@ -45,7 +45,7 @@ Request Body:
     "tags": ["welcome", "general"]
 }
 
-Response:
+### Response:
 {
     "id": 1,
     "locale_id": 1,
@@ -56,8 +56,8 @@ Response:
     "updated_at": "2025-01-23T10:23:51.000000Z"
 }
 
-2. Update a Translation
-PUT /translations/{id}
+### 2. Update a Translation
+### PUT /translations/{id}
 
 Request Body:
 
@@ -65,7 +65,7 @@ Request Body:
     "content": "Hi, world",
     "tags": ["greetings"]
 }
-Response:
+### Response:
 
 {
     "id": 1,
@@ -78,12 +78,12 @@ Response:
 }
 
 
-3. Export Translations for a Locale
-GET /translations/export/{locale}
+### 3. Export Translations for a Locale
+### GET /translations/export/{locale}
 
-Response:
+### Response:
 
-Exports all translations for the specified locale in JSON format.
+### Exports all translations for the specified locale in JSON format.
 
 [
     {
@@ -100,4 +100,101 @@ Exports all translations for the specified locale in JSON format.
 
 
 
-This Translation Management System provides an easy-to-use structure to manage locales and translations in your Laravel application. It allows CRUD operations and exporting translations for different locales.
+### This Translation Management System provides an easy-to-use structure to manage locales and translations in your Laravel application. It allows CRUD operations and exporting translations for different locales.
+
+
+
+
+### Test Case 1: Creating a Translation
+### Purpose: This test ensures that a valid request creates a translation entry successfully.
+
+### Input: A valid locale, key_name, content, and tags.
+### Expected Outcome: The translation is created and stored in the database with the correct data.
+
+public function it_creates_a_translation_successfully()
+{
+    $data = [
+        'locale' => 'en',
+        'key_name' => 'greetings',
+        'content' => 'Hello World',
+        'tags' => ['welcome', 'general'],
+    ];
+
+    $response = $this->json('POST', '/api/translations', $data);
+
+    $response->assertStatus(201);
+    $response->assertJsonFragment([
+        'locale_id' => 1,
+        'key_name' => 'greetings',
+        'content' => 'Hello World',
+        'tags' => json_encode(['welcome', 'general']),
+    ]);
+
+    $this->assertDatabaseHas('translations', [
+        'key_name' => 'greetings',
+        'content' => 'Hello World',
+        'tags' => json_encode(['welcome', 'general']),
+    ]);
+}
+
+
+### Test Case 2: Validating Required Fields
+### Purpose: This test checks that the API validates required fields such as key_name and content.
+
+Input: Missing key_name or content.
+Expected Outcome: The API should return a 422 status with a validation error.
+
+public function it_validates_required_fields()
+{
+    $data = [
+        'locale' => 'en',
+        'content' => 'Hello World',
+    ];
+
+    $response = $this->json('POST', '/api/translations', $data);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['key_name']);
+}
+### Test Case 3: Validating Locale Existence
+### Purpose: This test ensures that the API validates if the provided locale exists in the system.
+
+Input: A non-existent locale (fr).
+Expected Outcome: The API should return a 422 status with a validation error for locale.
+
+public function it_validates_locale_exists()
+{
+    $data = [
+        'locale' => 'fr',
+        'key_name' => 'greetings',
+        'content' => 'Bonjour le monde',
+    ];
+
+    $response = $this->json('POST', '/api/translations', $data);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['locale']);
+}
+### Test Case 4: Handling Null Tags
+### Purpose: This test checks that if the tags field is null, it gets stored as an empty array.
+
+Input: A null value for tags.
+Expected Outcome: The tags should be stored as an empty array in the database.
+
+public function it_handles_null_tags()
+{
+    $data = [
+        'locale' => 'en',
+        'key_name' => 'goodbye',
+        'content' => 'Goodbye World',
+        'tags' => null,
+    ];
+
+    $response = $this->json('POST', '/api/translations', $data);
+    $response->assertStatus(201);
+    $response->assertJsonFragment(['tags' => json_encode([])]);
+
+    $this->assertDatabaseHas('translations', [
+        'key_name' => 'goodbye',
+        'content' => 'Goodbye World',
+        'tags' => json_encode([]),
+    ]);
+}
