@@ -10,11 +10,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
-
-
-
-
     Route::middleware('api')->post('/translation', [TranslationController::class, 'store']);
     Route::put('/translations/{id}', [TranslationController::class, 'update']);
     // Route::get('/translations', [TranslationController::class, 'index']);
