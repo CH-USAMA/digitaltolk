@@ -9,9 +9,16 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
-        //
+        Schema::create('translations', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('locale_id')->constrained('locales')->onDelete('cascade');
+            $table->string('key_name');
+            $table->text('content');
+            $table->json('tags')->nullable();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -19,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('translations');
     }
 };
